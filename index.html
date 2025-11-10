@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Random Key Generator</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#7c5cff;
+      --muted:#9aa4b2;
+      --surface:#0b1220;
+      --glass: rgba(255,255,255,0.03);
+      --success:#2dd4bf;
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{
+      margin:0;
+      background: linear-gradient(180deg,#071028 0%, #071a2a 100%);
+      color:#e6eef6;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+      gap:20px;
+    }
+    .container{
+      width:100%;
+      max-width:960px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;
+      padding:20px;
+      box-shadow: 0 6px 30px rgba(2,6,23,0.6);
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:18px;
+    }
+    .panel{
+      background:var(--glass);
+      padding:16px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    h1{margin:0 0 8px 0;font-size:18px;}
+    p.lead{margin:0 0 14px 0;color:var(--muted);font-size:13px;}
+    label{display:block;font-size:13px;margin-top:10px;color:#cfe3ff;}
+    input[type="number"], input[type="text"], select {
+      width:100%;
+      padding:10px 12px;
+      margin-top:6px;
+      border-radius:8px;
+      background:#061226;
+      border:1px solid rgba(255,255,255,0.04);
+      color:#e9f2ff;
+      font-size:14px;
+    }
+    .row{display:flex;gap:8px;align-items:center;}
+    .small{font-size:12px;color:var(--muted);}
+    .options{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+    .checkbox{
+      display:flex;gap:8px;align-items:center;
+      cursor:pointer;
+      user-select:none;
+    }
+    button{
+      background:linear-gradient(90deg,var(--accent), #4f7bff);
+      border:none;color:white;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;
+      box-shadow: 0 6px 18px rgba(92,70,255,0.12);
+    }
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);box-shadow:none;}
+    .controls{display:flex;gap:8px;margin-top:12px;}
+    textarea{
+      width:100%;
+      min-height:320px;
+      background:transparent;border:1px dashed rgba(255,255,255,0.04);
+      color:#e6eef6;padding:12px;border-radius:8px;font-family:monospace;font-size:13px;
+      resize:vertical;
+    }
+    .meta{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin-top:10px;}
+    .progress{
+      margin-top:10px;height:8px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden;
+    }
+    .progress > i{display:block;height:100%;background:linear-gradient(90deg,#7c5cff,#4f7bff);width:0%;}
+    .footer{grid-column:1/-1;margin-top:8px;text-align:center;color:var(--muted);font-size:13px;}
+    .inline{display:inline-flex;gap:8px;align-items:center;}
+    .chip{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,0.02);}
+    @media (max-width:880px){
+      .container{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="application" aria-label="Random Key Generator">
+    <div class="panel" aria-hidden="false">
+      <h1>Random Key Generator</h1>
+      <p class="lead">กำหนดความยาว และจำนวนคีย์ เลือกชุดตัวอักษร แล้วกด "Generate" เพื่อสร้างคีย์และดาวน์โหลดเป็นไฟล์ .txt</p>
+
+      <label for="numKeys">จะสุ่มกี่คีย์?</label>
+      <input id="numKeys" type="number" min="1" max="100000" value="10" />
+
+      <label for="keyLen">ความยาวของแต่ละคีย์ (characters)</label>
+      <input id="keyLen" type="number" min="4" max="1024" value="32" />
+
+      <label>ชุดอักขระ (charset)</label>
+      <div class="options" role="group" aria-label="charset options">
+        <label class="checkbox"><input id="useUpper" type="checkbox" checked/> <span>ตัวพิมพ์ใหญ่ A–Z</span></label>
+        <label class="checkbox"><input id="useLower" type="checkbox" checked/> <span>ตัวพิมพ์เล็ก a–z</span></label>
+        <label class="checkbox"><input id="useDigits" type="checkbox" checked/> <span>ตัวเลข 0–9</span></label>
+        <label class="checkbox"><input id="useSymbols" type="checkbox"/> <span>สัญลักษณ์พิเศษ (เช่น !@#$%)</span></label>
+      </div>
+
+      <label for="filename">ชื่อไฟล์เมื่อดาวน์โหลด</label>
+      <input id="filename" type="text" value="keys.txt" />
+
+      <div style="margin-top:12px" class="row">
+        <div style="flex:1">
+          <button id="generateBtn">Generate</button>
+          <button id="downloadBtn" class="ghost" disabled>ดาวน์โหลด .txt</button>
+        </div>
+      </div>
+
+      <div class="meta">
+        <div class="inline"><span class="chip" id="statusChip">สถานะ: พร้อม</span></div>
+        <div><small id="countInfo">0 keys</small></div>
+      </div>
+
+      <div class="progress" aria-hidden="false" title="progress">
+        <i id="progressBar" style="width:0%"></i>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h1>ผลลัพธ์ (preview)</h1>
+      <p class="lead">คีย์ที่สร้างจะแสดงในนี้ — แต่ไฟล์ที่จะดาวน์โหลดจะมีคีย์ทุกอันแยกบรรทัด</p>
+
+      <textarea id="resultArea" readonly placeholder="กด Generate เพื่อสร้างคีย์..."></textarea>
+
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+        <button id="copyBtn" class="ghost">คัดลอกทั้งหมด</button>
+        <button id="clearBtn" class="ghost">ล้าง</button>
+        <div style="flex:1;text-align:right;color:var(--muted)"><small>Web Crypto API ถูกใช้เพื่อสุ่ม</small></div>
+      </div>
+    </div>
+
+    <div class="footer">© 2025 Random Key Generator by Khaotom</div>
+  </div>
+
+  <script>
+    // Elements
+    const numKeysEl = document.getElementById('numKeys');
+    const keyLenEl = document.getElementById('keyLen');
+    const useUpperEl = document.getElementById('useUpper');
+    const useLowerEl = document.getElementById('useLower');
+    const useDigitsEl = document.getElementById('useDigits');
+    const useSymbolsEl = document.getElementById('useSymbols');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const filenameEl = document.getElementById('filename');
+    const resultArea = document.getElementById('resultArea');
+    const statusChip = document.getElementById('statusChip');
+    const countInfo = document.getElementById('countInfo');
+    const progressBar = document.getElementById('progressBar');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    // Default char sets
+    const CHAR_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const CHAR_LOWER = 'abcdefghijklmnopqrstuvwxyz';
+    const CHAR_DIGITS = '0123456789';
+    const CHAR_SYMBOLS = '!@#$%^&*()-_=+[]{};:,./?<>|\\~`';
+
+    function buildCharset() {
+      let s = '';
+      if (useUpperEl.checked) s += CHAR_UPPER;
+      if (useLowerEl.checked) s += CHAR_LOWER;
+      if (useDigitsEl.checked) s += CHAR_DIGITS;
+      if (useSymbolsEl.checked) s += CHAR_SYMBOLS;
+      return s;
+    }
+
+    function setStatus(text, color) {
+      statusChip.textContent = `สถานะ: ${text}`;
+      // color optional: green/yellow/red mapping only via inline styles
+      statusChip.style.border = color ? `1px solid ${color}` : '';
+    }
+
+    // Generate secure random key using Web Crypto
+    function generateKeySecure(charset, length) {
+      // charset: string, length: number
+      // We'll produce length chars by mapping random bytes -> index via modulo
+      const out = [];
+      const n = charset.length;
+      // To reduce modulo bias, we can discard > 255 - (256 % n) values.
+      // But for simplicity and speed with acceptable bias for most uses, we'll use modulo.
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      for (let i = 0; i < length; i++) {
+        out.push(charset[bytes[i] % n]);
+      }
+      return out.join('');
+    }
+
+    // Generate multiple keys (progressive update to keep UI responsive)
+    async function generateMultiple(charset, keyLen, count, progressCallback) {
+      const results = [];
+      const batch = 256; // generate in batches to keep UI updating
+      for (let start = 0; start < count; start += batch) {
+        const end = Math.min(count, start + batch);
+        for (let i = start; i < end; i++) {
+          results.push(generateKeySecure(charset, keyLen));
+        }
+        if (progressCallback) progressCallback(Math.round((results.length / count) * 100));
+        // yield to UI
+        await new Promise(r => setTimeout(r, 0));
+      }
+      return results;
+    }
+
+    function enableDownload(content, fname) {
+        downloadBtn.disabled = false;
+        downloadBtn.classList.remove('ghost');
+
+        downloadBtn.onclick = () => {
+            if (!content) return; // ป้องกันกรณีไม่มีเนื้อหา
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fname || 'keys.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
+    }
+
+
+
+    // Event handlers
+    generateBtn.addEventListener('click', async () => {
+      const count = parseInt(numKeysEl.value, 10) || 0;
+      const keyLen = parseInt(keyLenEl.value, 10) || 0;
+      const fname = filenameEl.value.trim() || 'keys.txt';
+      const charset = buildCharset();
+
+      // validation
+      if (count <= 0 || count > 100000) {
+        alert('กรุณากรอกจำนวนคีย์ระหว่าง 1 ถึง 100000');
+        return;
+      }
+      if (keyLen < 1 || keyLen > 1024) {
+        alert('ความยาวคีย์ต้องอยู่ระหว่าง 1 ถึง 1024 ตัวอักษร');
+        return;
+      }
+      if (!charset) {
+        alert('กรุณาเลือกชุดอักขระอย่างน้อยหนึ่งชุด (Upper/Lower/Digits/Symbols).');
+        return;
+      }
+
+      // prepare UI
+      setStatus('กำลังสร้าง...', '#ffd166');
+      progressBar.style.width = '0%';
+      resultArea.value = '';
+      downloadBtn.disabled = true;
+      downloadBtn.classList.add('ghost');
+      copyBtn.disabled = true;
+      clearBtn.disabled = true;
+      generateBtn.disabled = true;
+
+      // generate
+      try {
+        const results = await generateMultiple(charset, keyLen, count, (p) => {
+          progressBar.style.width = p + '%';
+          countInfo.textContent = `${p}%`;
+        });
+
+        // join with newline
+        const content = results.join('\n');
+        resultArea.value = content;
+        countInfo.textContent = `${results.length} keys · ${keyLen} chars each`;
+        progressBar.style.width = '100%';
+        setStatus('เสร็จแล้ว', '#2dd4bf');
+
+        // enable download
+        enableDownload(content, fname);
+
+        copyBtn.disabled = false;
+        clearBtn.disabled = false;
+      } catch (err) {
+        console.error(err);
+        alert('เกิดข้อผิดพลาดขณะสร้างคีย์: ' + (err.message || err));
+        setStatus('ผิดพลาด', '#ff6b6b');
+      } finally {
+        generateBtn.disabled = false;
+      }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const txt = resultArea.value;
+      if (!txt) return;
+      try {
+        await navigator.clipboard.writeText(txt);
+        setStatus('คัดลอกเรียบร้อย', '#2dd4bf');
+        setTimeout(() => setStatus('พร้อม'), 1500);
+      } catch {
+        alert('ไม่สามารถคัดลอกอัตโนมัติ — กรุณาเลือกและคัดลอกด้วยตนเอง');
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      resultArea.value = '';
+      downloadBtn.disabled = true;
+      downloadBtn.classList.add('ghost');
+      countInfo.textContent = '0 keys';
+      progressBar.style.width = '0%';
+      setStatus('พร้อม');
+    });
+
+    // make downloadBtn an anchor for file url
+    // Create anchor element props if not already
+    // (function initDownload() {
+    //   // transform downloadBtn to <a> if it's a button (works cross-browser)
+    //   const btn = downloadBtn;
+    //   const a = document.createElement('a');
+    //   a.id = btn.id;
+    //   a.className = btn.className;
+    //   a.textContent = btn.textContent;
+    //   a.setAttribute('aria-disabled', 'true');
+    //   a.style.textDecoration = 'none';
+    //   a.style.display = 'inline-block';
+    //   a.style.marginLeft = '8px';
+    //   btn.replaceWith(a);
+    //   // reassign reference and restore listeners (none to keep)
+    //   window.downloadBtn = a;
+    //   // ensure click disabled when no href
+    //   a.addEventListener('click', (e) => {
+    //     if (!a.href) {
+    //       e.preventDefault();
+    //     }
+    //   });
+    //   // update global var in scope
+    //   downloadBtn = a;
+    // })();
+
+    // Initial status
+    setStatus('พร้อม');
+  </script>
+</body>
+</html>
